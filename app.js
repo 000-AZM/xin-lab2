@@ -33,15 +33,27 @@ onAuthStateChanged(auth, async user => {
 });
 
 window.register = async () => {
-  const email = document.getElementById('email').value;
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
+
+  if (!email.endsWith('@xinn.lab')) {
+    alert('Only @xinn.lab email addresses are allowed.');
+    return;
+  }
+
   const userCred = await createUserWithEmailAndPassword(auth, email, password);
   await setDoc(doc(db, 'users', userCred.user.uid), { name: email });
 };
 
 window.login = async () => {
-  const email = document.getElementById('email').value;
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
+
+  if (!email.endsWith('@xinn.lab')) {
+    alert('Only @xinn.lab email addresses are allowed.');
+    return;
+  }
+
   await signInWithEmailAndPassword(auth, email, password);
 };
 
@@ -51,9 +63,12 @@ window.logout = async () => {
 
 window.uploadProfilePic = async () => {
   const file = document.getElementById('profile-pic').files[0];
+  if (!file) return;
+
   const storageRef = ref(storage, 'avatars/' + auth.currentUser.uid);
   await uploadBytes(storageRef, file);
   const url = await getDownloadURL(storageRef);
+
   await setDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url }, { merge: true });
   userPic.src = url;
 };
@@ -61,11 +76,13 @@ window.uploadProfilePic = async () => {
 window.createPost = async () => {
   const content = document.getElementById('postContent').value;
   if (!content.trim()) return;
+
   await addDoc(collection(db, 'posts'), {
     userId: auth.currentUser.uid,
     content,
     timestamp: Date.now()
   });
+
   document.getElementById('postContent').value = '';
 };
 
@@ -95,6 +112,7 @@ function loadPosts() {
 
 window.addComment = async (postId, comment) => {
   if (!comment.trim()) return;
+
   await addDoc(collection(db, 'posts', postId, 'comments'), {
     text: comment,
     userId: auth.currentUser.uid,
