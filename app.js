@@ -189,4 +189,158 @@ function loadComments(postId) {
 
 // Friend system
 
-//
+// Send friend request by email
+window.sendFriendRequest = async () => {
+  const toEmail = document.getElementById('friend-email').value.trim();
+  if (!toEmail.endsWith('@xinn.lab')) {
+    alert('Friend email must end with @xinn.lab');
+    return;
+  }
+  const usersCol = collection(db, 'users');
+  const q = query(usersCol, where('email', '==', toEmail));
+  const snap = await getDocs(q);
+  if (snap.empty) return alert('User not found');
+  const toId = snap.docs[0].id;
+
+  // Check if request already sent or friends
+  const reqId = `${auth.currentUser.uid}_${toId}`;
+  const reqDoc = await getDoc(doc(db, 'friend_requests', reqId));
+  if (reqDoc.exists()) return alert('Request already sent or you are friends');
+
+  await setDoc(doc(db, 'friend_requests', reqId), {
+    from: auth.currentUser.uid,
+    to: toId,
+    status: 'pending',
+  });
+  alert('Request sent');
+};
+
+function loadFriendRequests() {
+  const q = query(collection(db, 'friend_requests'), where('to', '==', auth.currentUser.uid));
+  onSnapshot(q, (snap) => {
+    const container = document.getElementById('friend-requests');
+    container.innerHTML = '';
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      if (d.status === 'pending') {
+        const el = document.createElement('div');
+        el.innerHTML = `
+          Request from ${d.from} 
+          <button onclick="acceptFriend('${d.from}')">Accept</button>
+          <button onclick="rejectFriend('${docSnap.id}')">Reject</button>
+        `;
+        container.appendChild(el);
+      }
+    });
+  });
+}
+
+window.acceptFriend = async (friendId) => {
+  const reqId = `${friendId}_${auth.currentUser.uid}`;
+  await setDoc(doc(db, 'friend_requests', reqId), { status: 'accepted' }, { merge: true });
+  // Add to friends collection (both ways)
+  await setDoc(doc(db, 'friends', `${auth.currentUser.uid}_${friendId}`), {
+    a: auth.currentUser.uid,
+    b: friendId,
+  });
+  await setDoc(doc(db, 'friends', `${friendId}_${auth.currentUser.uid}`), {
+    a: friendId,
+    b: auth.currentUser.uid,
+  });
+  alert('Friend added');
+  loadFriendsList();
+};
+
+window.rejectFriend = async (reqId) => {
+  await setDoc(doc(db, 'friend_requests', reqId), { status: 'rejected' }, { merge: true });
+  alert('Request rejected');
+};
+
+function loadFriendsList() {
+  const q = query(collection(db, 'friends'), where('a', '==', auth.currentUser.uid));
+  onSnapshot(q, async (snap) => {
+    const container = document.getElementById('friend-list');
+    container.innerHTML = '';
+    for (let docSnap of snap.docs) {
+      const f = docSnap.data();
+      const userSnap = await getDoc(doc(db, 'users', f.b));
+      const userData = userSnap.data() || {};
+      const el = document.createElement('div');
+      el.textContent = userData.name || f.b;
+      container.appendChild(el);
+    }
+  });
+}
+
+// Chat system
+
+function loadFriendsForChat() {
+  const select = document.getElementById('chat-users');
+  const q = query(collection(db, 'friends'), where('a', '==', auth.currentUser.uid));
+  onSnapshot(q, async (snap) => {
+    select.innerHTML = '<option>Select Friend</option>';
+    for (let docSnap of snap.docs) {
+      const f = docSnap.data();
+      const userSnap = await getDoc(doc(db, 'users', f.b));
+      const userData = userSnap.data() || {};
+      const opt = document.createElement('option');
+      opt.value = f.b;
+      opt.text = userData.name || f.b;
+      select.appendChild(opt);
+    }
+  });
+}
+
+window.sendMessage = async () => {
+  const to = document.getElementById('chat-users').value;
+  const msg = document.getElementById('chat-msg').value.trim();
+  if (!to || !msg) return;
+  await addDoc(collection(db, 'messages'), {
+    from: auth.currentUser.uid,
+    to,
+    msg,
+    time: Date.now(),
+  });
+  document.getElementById('chat-msg').value = '';
+};
+
+function loadMessages(friendId) {
+  const q = query(collection(db, 'messages'), orderBy('time'));
+  onSnapshot(q, (snap) => {
+    const div = document.getElementById('chat-messages');
+    div.innerHTML = '';
+    snap.forEach((docSnap) => {
+      const d = docSnap.data();
+      if (
+        (d.from === auth.currentUser.uid && d.to === friendId) ||
+        (d.to === auth.currentUser.uid && d.from === friendId)
+      ) {
+        const p = document.createElement('p');
+        p.textContent = `${d.from === auth.currentUser.uid ? 'You' : d.from}: ${d.msg}`;
+        div.appendChild(p);
+      }
+    });
+  });
+}
+
+// Search users
+window.searchUsers = async (term) => {
+  const container = document.getElementById('search-results');
+  container.innerHTML = '';
+  if (!term.trim()) return;
+  const q = query(collection(db, 'users'));
+  const snap = await getDocs(q);
+  snap.forEach((docSnap) => {
+    const u = docSnap.data();
+    if (u.name && u.name.toLowerCase().includes(term.toLowerCase())) {
+      const div = document.createElement('div');
+      div.textContent = u.name + (u.email ? ` (${u.email})` : '');
+      container.appendChild(div);
+    }
+  });
+};
+
+// Theme toggle
+window.toggleTheme = () => {
+  document.body.classList.toggle('dark');
+};
