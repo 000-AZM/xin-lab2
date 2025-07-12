@@ -4,8 +4,64 @@
   <meta charset="UTF-8" />
   <title>Social App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
-  <script type="module" src="app.js" defer></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0; padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    input, textarea, select {
+      width: 100%;
+      margin: 5px 0 10px 0;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+    .nav { display: flex; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+    .post, .comment { background: #eee; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    .user-pic {
+      width: 32px; height: 32px; border-radius: 50%; vertical-align: middle; margin-right: 8px;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+    .comment-input input {
+      width: 100%; margin-top: 5px; padding: 6px; border-radius: 3px; border: 1px solid #bbb;
+    }
+    body.dark {
+      background: #222; color: #eee;
+    }
+    body.dark input, body.dark textarea, body.dark select {
+      background: #444; color: white; border: 1px solid #666;
+    }
+    body.dark .post, body.dark .comment {
+      background: #333;
+    }
+    #chat-messages {
+      height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-top: 10px;
+      background: white; color: black;
+    }
+    body.dark #chat-messages {
+      background: #444; color: white;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -37,7 +93,7 @@
       </div>
 
       <!-- Profile -->
-      <div id="profile" class="section" style="display:none;">
+      <div id="profile" class="section">
         <h3>Profile</h3>
         <img id="user-pic" class="user-pic" src="" />
         <input type="file" id="profile-pic" onchange="uploadProfilePic()" />
@@ -50,22 +106,21 @@
       </div>
 
       <!-- Chat -->
-      <div id="chat" class="section" style="display:none;">
+      <div id="chat" class="section">
         <h3>Chat</h3>
         <select id="chat-users" onchange="loadMessages(this.value)">
-          <option>Select Friend</option>
+          <option value="">Select Friend</option>
         </select>
-        <div id="chat-messages" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-top: 10px;"></div>
+        <div id="chat-messages"></div>
         <input
           id="chat-msg"
           placeholder="Type message"
           onkeypress="if(event.key==='Enter') sendMessage()"
-          style="width: 100%; margin-top: 5px;"
         />
       </div>
 
       <!-- Friends -->
-      <div id="friend" class="section" style="display:none;">
+      <div id="friend" class="section">
         <h3>Friends</h3>
         <input id="friend-email" placeholder="Friend email" />
         <button onclick="sendFriendRequest()">Send Request</button>
@@ -76,14 +131,14 @@
       </div>
 
       <!-- Search -->
-      <div id="search" class="section" style="display:none;">
+      <div id="search" class="section">
         <h3>Search Users</h3>
         <input type="text" id="search-input" placeholder="Search..." oninput="searchUsers(this.value)" />
         <div id="search-results"></div>
       </div>
 
       <!-- Settings -->
-      <div id="setting" class="section" style="display:none;">
+      <div id="setting" class="section">
         <h3>Settings</h3>
         <label>
           Dark Mode:
@@ -93,5 +148,370 @@
       </div>
     </div>
   </div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut,
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      collection,
+      addDoc,
+      onSnapshot,
+      query,
+      orderBy,
+      where,
+      getDocs,
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import {
+      getStorage,
+      ref,
+      uploadBytes,
+      getDownloadURL,
+    } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+    // Your Firebase config here
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const authSection = document.getElementById('auth-section');
+    const userSection = document.getElementById('user-section');
+    const userNameSpan = document.getElementById('user-name');
+    const userPic = document.getElementById('user-pic');
+    const postsDiv = document.getElementById('posts');
+
+    window.showSection = function (id) {
+      document.querySelectorAll('.section').forEach(div => div.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        authSection.style.display = 'none';
+        userSection.style.display = 'block';
+
+        const profileSnap = await getDoc(doc(db, 'users', user.uid));
+        const data = profileSnap.data() || {};
+        userPic.src = data.photoURL || 'https://via.placeholder.com/32';
+        document.getElementById('profile-name').value = data.name || '';
+        document.getElementById('profile-bio').value = data.bio || '';
+
+        loadPosts();
+        loadFriendRequests();
+        loadFriendsList();
+        loadFriendsForChat();
+
+        showSection('feed');
+      } else {
+        authSection.style.display = 'block';
+        userSection.style.display = 'none';
+      }
+    });
+
+    window.register = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      if (!email.endsWith('@xinn.lab')) {
+        alert('Only @xinn.lab email addresses are allowed.');
+        return;
+      }
+      try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, 'users', userCred.user.uid), { name: email, email });
+      } catch (e) {
+        alert(e.message);
+      }
+    };
+
+    window.login = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      if (!email.endsWith('@xinn.lab')) {
+        alert('Only @xinn.lab email addresses are allowed.');
+        return;
+      }
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (e) {
+        alert(e.message);
+      }
+    };
+
+    window.logout = async () => {
+      await signOut(auth);
+    };
+
+    window.uploadProfilePic = async () => {
+      const file = document.getElementById('profile-pic').files[0];
+      if (!file) return;
+      const storageRef = ref(storage, 'avatars/' + auth.currentUser.uid);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      await setDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url }, { merge: true });
+      userPic.src = url;
+    };
+
+    window.updateProfile = async () => {
+      const name = document.getElementById('profile-name').value.trim();
+      const bio = document.getElementById('profile-bio').value.trim();
+      await setDoc(doc(db, 'users', auth.currentUser.uid), { name, bio }, { merge: true });
+      alert('Profile updated!');
+    };
+
+    window.createPost = async () => {
+      const content = document.getElementById('postContent').value.trim();
+      if (!content) return alert('Post cannot be empty');
+      await addDoc(collection(db, 'posts'), {
+        userId: auth.currentUser.uid,
+        content,
+        timestamp: Date.now(),
+      });
+      document.getElementById('postContent').value = '';
+    };
+
+    function loadPosts() {
+      const q = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+      onSnapshot(q, async (snapshot) => {
+        postsDiv.innerHTML = '';
+        for (let docSnap of snapshot.docs) {
+          const post = docSnap.data();
+          const userRef = await getDoc(doc(db, 'users', post.userId));
+          const userData = userRef.data() || {};
+          const div = document.createElement('div');
+          div.className = 'post';
+          div.innerHTML = `
+            <div><img class="user-pic" src="${userData.photoURL || ''}" /> ${userData.name || 'User'}</div>
+            <div>${post.content}</div>
+            <div>
+              <button onclick="likePost('${docSnap.id}')">❤️ Like</button> 
+              <span id="like-count-${docSnap.id}">0</span> likes
+            </div>
+            <div class="comment-input">
+              <input placeholder="Add comment..." onkeypress="if(event.key==='Enter'){ addComment('${docSnap.id}', this.value); this.value=''; }" />
+            </div>
+            <div id="comments-${docSnap.id}"></div>
+          `;
+          postsDiv.appendChild(div);
+          loadComments(docSnap.id);
+          loadLikes(docSnap.id);
+        }
+      });
+    }
+
+    window.likePost = async (postId) => {
+      await setDoc(doc(db, 'posts', postId, 'likes', auth.currentUser.uid), {
+        userId: auth.currentUser.uid,
+      });
+    };
+
+    function loadLikes(postId) {
+      const q = collection(db, 'posts', postId, 'likes');
+      onSnapshot(q, (snap) => {
+        document.getElementById(`like-count-${postId}`).textContent = snap.size;
+      });
+    }
+
+    window.addComment = async (postId, comment) => {
+      if (!comment.trim()) return;
+      await addDoc(collection(db, 'posts', postId, 'comments'), {
+        text: comment,
+        userId: auth.currentUser.uid,
+        time: Date.now(),
+      });
+    };
+
+    function loadComments(postId) {
+      const q = query(collection(db, 'posts', postId, 'comments'), orderBy('time'));
+      onSnapshot(q, async (snap) => {
+        const div = document.getElementById(`comments-${postId}`);
+        div.innerHTML = '';
+        for (let docSnap of snap.docs) {
+          const c = docSnap.data();
+          const u = await getDoc(doc(db, 'users', c.userId));
+          const user = u.data() || {};
+          const p = document.createElement('div');
+          p.className = 'comment';
+          p.innerHTML = `<b>${user.name || 'User'}:</b> ${c.text}`;
+          div.appendChild(p);
+        }
+      });
+    }
+
+    // Friend system
+    window.sendFriendRequest = async () => {
+      const toEmail = document.getElementById('friend-email').value.trim();
+      if (!toEmail.endsWith('@xinn.lab')) {
+        alert('Friend email must end with @xinn.lab');
+        return;
+      }
+      const usersCol = collection(db, 'users');
+      const q = query(usersCol, where('email', '==', toEmail));
+      const snap = await getDocs(q);
+      if (snap.empty) return alert('User not found');
+      const toId = snap.docs[0].id;
+
+      const reqId = `${auth.currentUser.uid}_${toId}`;
+      const reqDoc = await getDoc(doc(db, 'friend_requests', reqId));
+      if (reqDoc.exists()) return alert('Request already sent or you are friends');
+
+      await setDoc(doc(db, 'friend_requests', reqId), {
+        from: auth.currentUser.uid,
+        to: toId,
+        status: 'pending',
+      });
+      alert('Request sent');
+    };
+
+    function loadFriendRequests() {
+      const q = query(collection(db, 'friend_requests'), where('to', '==', auth.currentUser.uid));
+      onSnapshot(q, (snap) => {
+        const container = document.getElementById('friend-requests');
+        container.innerHTML = '';
+        snap.forEach((docSnap) => {
+          const d = docSnap.data();
+          if (d.status === 'pending') {
+            const el = document.createElement('div');
+            el.innerHTML = `
+              Request from ${d.from} 
+              <button onclick="acceptFriend('${d.from}')">Accept</button>
+              <button onclick="rejectFriend('${docSnap.id}')">Reject</button>
+            `;
+            container.appendChild(el);
+          }
+        });
+      });
+    }
+
+    window.acceptFriend = async (friendId) => {
+      const reqId = `${friendId}_${auth.currentUser.uid}`;
+      await setDoc(doc(db, 'friend_requests', reqId), { status: 'accepted' }, { merge: true });
+      await setDoc(doc(db, 'friends', `${auth.currentUser.uid}_${friendId}`), {
+        a: auth.currentUser.uid,
+        b: friendId,
+      });
+      await setDoc(doc(db, 'friends', `${friendId}_${auth.currentUser.uid}`), {
+        a: friendId,
+        b: auth.currentUser.uid,
+      });
+      alert('Friend added');
+    };
+
+    window.rejectFriend = async (reqId) => {
+      await setDoc(doc(db, 'friend_requests', reqId), { status: 'rejected' }, { merge: true });
+      alert('Request rejected');
+    };
+
+    function loadFriendsList() {
+      const q = query(collection(db, 'friends'), where('a', '==', auth.currentUser.uid));
+      onSnapshot(q, async (snap) => {
+        const container = document.getElementById('friend-list');
+        container.innerHTML = '';
+        for (let docSnap of snap.docs) {
+          const f = docSnap.data();
+          const userSnap = await getDoc(doc(db, 'users', f.b));
+          const userData = userSnap.data() || {};
+          const el = document.createElement('div');
+          el.textContent = userData.name || f.b;
+          container.appendChild(el);
+        }
+      });
+    }
+
+    // Chat system
+    function loadFriendsForChat() {
+      const select = document.getElementById('chat-users');
+      const q = query(collection(db, 'friends'), where('a', '==', auth.currentUser.uid));
+      onSnapshot(q, async (snap) => {
+        select.innerHTML = '<option value="">Select Friend</option>';
+        for (let docSnap of snap.docs) {
+          const f = docSnap.data();
+          const userSnap = await getDoc(doc(db, 'users', f.b));
+          const userData = userSnap.data() || {};
+          const opt = document.createElement('option');
+          opt.value = f.b;
+          opt.text = userData.name || f.b;
+          select.appendChild(opt);
+        }
+      });
+    }
+
+    window.sendMessage = async () => {
+      const to = document.getElementById('chat-users').value;
+      const msg = document.getElementById('chat-msg').value.trim();
+      if (!to || !msg) return;
+      await addDoc(collection(db, 'messages'), {
+        from: auth.currentUser.uid,
+        to,
+        msg,
+        time: Date.now(),
+      });
+      document.getElementById('chat-msg').value = '';
+    };
+
+    window.loadMessages = (friendId) => {
+      if (!friendId) {
+        document.getElementById('chat-messages').innerHTML = '';
+        return;
+      }
+      const q = query(collection(db, 'messages'), orderBy('time'));
+      onSnapshot(q, (snap) => {
+        const div = document.getElementById('chat-messages');
+        div.innerHTML = '';
+        snap.forEach((docSnap) => {
+          const d = docSnap.data();
+          if (
+            (d.from === auth.currentUser.uid && d.to === friendId) ||
+            (d.to === auth.currentUser.uid && d.from === friendId)
+          ) {
+            const p = document.createElement('p');
+            p.textContent = `${d.from === auth.currentUser.uid ? 'You' : d.from}: ${d.msg}`;
+            div.appendChild(p);
+          }
+        });
+      });
+    };
+
+    // Search users
+    window.searchUsers = async (term) => {
+      const container = document.getElementById('search-results');
+      container.innerHTML = '';
+      if (!term.trim()) return;
+      const q = query(collection(db, 'users'));
+      const snap = await getDocs(q);
+      snap.forEach((docSnap) => {
+        const u = docSnap.data();
+        if (u.name && u.name.toLowerCase().includes(term.toLowerCase())) {
+          const div = document.createElement('div');
+          div.textContent = u.name + (u.email ? ` (${u.email})` : '');
+          container.appendChild(div);
+        }
+      });
+    };
+
+    // Theme toggle
+    window.toggleTheme = () => {
+      document.body.classList.toggle('dark');
+    };
+  </script>
 </body>
 </html>
