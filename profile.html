@@ -5,6 +5,42 @@
   <title>Profile - Social App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .profile-pic-label {
+      display: inline-block;
+      margin-left: 12px;
+      background-color: #6200ea;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .profile-pic-label:hover {
+      background-color: #3700b3;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .profile-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #6200ea;
+    }
+
+    .profile-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -17,17 +53,26 @@
       <a href="setting.html">Settings</a>
       <a href="index.html" onclick="logout()">Logout</a>
     </nav>
-    <h2>Edit Profile</h2>
-    <div class="flex-row">
-      <img id="user-pic" class="user-pic" src="https://via.placeholder.com/40" alt="Profile Picture" />
-      <input type="file" id="profile-pic" onchange="uploadProfilePic()" />
+
+    <h2>My Profile</h2>
+
+    <div class="profile-info">
+      <img id="user-pic" class="profile-img" src="https://via.placeholder.com/80" alt="Profile Picture" />
+      <label class="profile-pic-label">
+        Change Picture
+        <input type="file" id="profile-pic" onchange="uploadProfilePic()" />
+      </label>
     </div>
+
     <label>Name</label>
     <input id="profile-name" placeholder="Your Name" />
+
     <label>Bio</label>
     <textarea id="profile-bio" rows="3" placeholder="Your Bio"></textarea>
+
     <button onclick="updateProfile()">Update Profile</button>
   </div>
+
   <script type="module" src="js/app.js"></script>
   <script>
     window.onload = () => {
