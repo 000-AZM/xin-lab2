@@ -352,3 +352,43 @@ window.searchUsers = async (term) => {
     }
   });
 };
+
+window.loadProfile = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const docSnap = await getDoc(doc(db, "users", user.uid));
+  const data = docSnap.data() || {};
+
+  document.getElementById("profile-name").value = data.name || "";
+  document.getElementById("profile-bio").value = data.bio || "";
+  document.getElementById("user-pic").src = data.photoURL || "https://via.placeholder.com/80";
+};
+
+window.uploadProfilePic = async () => {
+  const file = document.getElementById("profile-pic").files[0];
+  if (!file) return;
+
+  const storageRef = ref(storage, "avatars/" + auth.currentUser.uid);
+  await uploadBytes(storageRef, file);
+  const url = await getDownloadURL(storageRef);
+
+  await setDoc(doc(db, "users", auth.currentUser.uid), {
+    photoURL: url
+  }, { merge: true });
+
+  document.getElementById("user-pic").src = url;
+  alert("Profile picture updated");
+};
+
+window.updateProfile = async () => {
+  const name = document.getElementById("profile-name").value.trim();
+  const bio = document.getElementById("profile-bio").value.trim();
+
+  await setDoc(doc(db, "users", auth.currentUser.uid), {
+    name,
+    bio
+  }, { merge: true });
+
+  alert("Profile updated successfully!");
+};
