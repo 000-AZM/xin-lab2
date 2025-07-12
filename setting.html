@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Settings - Social App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <nav class="navbar">
+      <a href="feed.html">Feed</a>
+      <a href="profile.html">Profile</a>
+      <a href="chat.html">Chat</a>
+      <a href="friend.html">Friends</a>
+      <a href="search.html">Search</a>
+      <a href="setting.html">Settings</a>
+      <a href="index.html" onclick="logout()">Logout</a>
+    </nav>
+    <h2>Settings</h2>
+    <label>
+      Dark Mode
+      <input type="checkbox" id="darkToggle" />
+    </label>
+    <p>About: This app was created by Xinn Lab.</p>
+  </div>
+  <script type="module" src="js/app.js"></script>
+  <script>
+    window.onload = () => {
+      window.checkAuthAndRedirect('setting.html');
+      const toggle = document.getElementById('darkToggle');
+      toggle.checked = document.body.classList.contains('dark-mode');
+      toggle.addEventListener('change', () => {
+        document.body.classList.toggle('dark-mode', toggle.checked);
+      });
+    };
+  </script>
+</body>
+</html>
