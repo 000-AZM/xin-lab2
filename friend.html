@@ -35,3 +35,67 @@
   </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Friends - Social App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .friend-box {
+      background: #fff;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .friend-box strong {
+      color: #6200ea;
+    }
+    button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      border: none;
+      background: #6200ea;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="navbar">
+      <a href="feed.html">Feed</a>
+      <a href="profile.html">Profile</a>
+      <a href="chat.html">Chat</a>
+      <a href="friend.html">Friends</a>
+      <a href="search.html">Search</a>
+      <a href="setting.html">Settings</a>
+      <a href="index.html" onclick="logout()">Logout</a>
+    </nav>
+
+    <h2>Friends</h2>
+
+    <h3>Send Friend Request</h3>
+    <input id="friend-email" placeholder="Enter @xinn.lab email" />
+    <button onclick="sendFriendRequest()">Send Request</button>
+
+    <h3>Incoming Requests</h3>
+    <div id="friend-requests"></div>
+
+    <h3>Your Friends</h3>
+    <div id="friend-list"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+  <script>
+    window.onload = () => {
+      checkAuthAndRedirect("friend.html");
+      loadFriendRequests();
+      loadFriendsList();
+    };
+  </script>
+</body>
+</html>
