@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Friends - Social App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <nav class="navbar">
+      <a href="feed.html">Feed</a>
+      <a href="profile.html">Profile</a>
+      <a href="chat.html">Chat</a>
+      <a href="friend.html">Friends</a>
+      <a href="search.html">Search</a>
+      <a href="setting.html">Settings</a>
+      <a href="index.html" onclick="logout()">Logout</a>
+    </nav>
+    <h2>Friends</h2>
+    <input id="friend-email" placeholder="Friend email (@xinn.lab)" />
+    <button onclick="sendFriendRequest()">Send Request</button>
+    <h3>Requests</h3>
+    <div id="friend-requests"></div>
+    <h3>Friends List</h3>
+    <div id="friend-list"></div>
+  </div>
+  <script type="module" src="js/app.js"></script>
+  <script>
+    window.onload = () => {
+      window.checkAuthAndRedirect('friend.html');
+      window.loadFriendRequests();
+      window.loadFriendsList();
+    };
+  </script>
+</body>
+</html>
