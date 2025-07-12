@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Social App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <script type="module" src="app.js" defer></script>
 </head>
@@ -29,37 +29,67 @@
         <button onclick="logout()">Logout</button>
       </div>
 
-      <div id="feed" class="section">
+      <!-- Feed -->
+      <div id="feed" class="section active">
         <textarea id="postContent" placeholder="What's on your mind?"></textarea>
         <button onclick="createPost()">Post</button>
         <div id="posts"></div>
       </div>
 
+      <!-- Profile -->
       <div id="profile" class="section" style="display:none;">
         <h3>Profile</h3>
         <img id="user-pic" class="user-pic" src="" />
-        <span id="user-name"></span>
         <input type="file" id="profile-pic" onchange="uploadProfilePic()" />
+        <br />
+        <label>Name</label>
+        <input id="profile-name" placeholder="Your Name" />
+        <label>Bio</label>
+        <input id="profile-bio" placeholder="Your Bio" />
+        <button onclick="updateProfile()">Update Profile</button>
       </div>
 
+      <!-- Chat -->
       <div id="chat" class="section" style="display:none;">
         <h3>Chat</h3>
-        <div id="chat-window">Coming soon...</div>
+        <select id="chat-users" onchange="loadMessages(this.value)">
+          <option>Select Friend</option>
+        </select>
+        <div id="chat-messages" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-top: 10px;"></div>
+        <input
+          id="chat-msg"
+          placeholder="Type message"
+          onkeypress="if(event.key==='Enter') sendMessage()"
+          style="width: 100%; margin-top: 5px;"
+        />
       </div>
 
+      <!-- Friends -->
       <div id="friend" class="section" style="display:none;">
         <h3>Friends</h3>
-        <div id="friend-list">Coming soon...</div>
+        <input id="friend-email" placeholder="Friend email" />
+        <button onclick="sendFriendRequest()">Send Request</button>
+        <h4>Requests</h4>
+        <div id="friend-requests"></div>
+        <h4>Friends List</h4>
+        <div id="friend-list"></div>
       </div>
 
+      <!-- Search -->
       <div id="search" class="section" style="display:none;">
         <h3>Search Users</h3>
-        <input type="text" placeholder="Search...">
+        <input type="text" id="search-input" placeholder="Search..." oninput="searchUsers(this.value)" />
+        <div id="search-results"></div>
       </div>
 
+      <!-- Settings -->
       <div id="setting" class="section" style="display:none;">
         <h3>Settings</h3>
-        <p>Coming soon...</p>
+        <label>
+          Dark Mode:
+          <input type="checkbox" onchange="toggleTheme()" />
+        </label>
+        <p>About: This app was made by Xinn Lab.</p>
       </div>
     </div>
   </div>
