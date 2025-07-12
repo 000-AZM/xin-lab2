@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Social App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="module" src="app.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <h2>🔥 Social App</h2>
+
+    <div id="auth-section">
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <button onclick="register()">Register</button>
+    </div>
+
+    <div id="user-section" style="display:none;">
+      <div class="nav">
+        <button onclick="showSection('feed')">Feed</button>
+        <button onclick="showSection('profile')">Profile</button>
+        <button onclick="showSection('chat')">Chat</button>
+        <button onclick="showSection('friend')">Friends</button>
+        <button onclick="showSection('search')">Search</button>
+        <button onclick="showSection('setting')">Settings</button>
+        <button onclick="logout()">Logout</button>
+      </div>
+
+      <div id="feed" class="section">
+        <textarea id="postContent" placeholder="What's on your mind?"></textarea>
+        <button onclick="createPost()">Post</button>
+        <div id="posts"></div>
+      </div>
+
+      <div id="profile" class="section" style="display:none;">
+        <h3>Profile</h3>
+        <img id="user-pic" class="user-pic" src="" />
+        <span id="user-name"></span>
+        <input type="file" id="profile-pic" onchange="uploadProfilePic()" />
+      </div>
+
+      <div id="chat" class="section" style="display:none;">
+        <h3>Chat</h3>
+        <div id="chat-window">Coming soon...</div>
+      </div>
+
+      <div id="friend" class="section" style="display:none;">
+        <h3>Friends</h3>
+        <div id="friend-list">Coming soon...</div>
+      </div>
+
+      <div id="search" class="section" style="display:none;">
+        <h3>Search Users</h3>
+        <input type="text" placeholder="Search...">
+      </div>
+
+      <div id="setting" class="section" style="display:none;">
+        <h3>Settings</h3>
+        <p>Coming soon...</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
