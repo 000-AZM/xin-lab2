@@ -5,6 +5,22 @@
   <title>Chat - Social App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .chat-box {
+      background: #fff;
+      padding: 12px;
+      border-radius: 12px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+    .chat-line {
+      margin: 6px 0;
+    }
+    .chat-line.you {
+      color: #6200ea;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -17,19 +33,23 @@
       <a href="setting.html">Settings</a>
       <a href="index.html" onclick="logout()">Logout</a>
     </nav>
-    <h2>Chat with Friend</h2>
-    <select id="chat-users" onchange="loadMessages(this.value)">
-      <option value="">Select Friend</option>
-    </select>
-    <div id="chat-messages" style="height: 300px; overflow-y: auto; border: 1px solid #ccc; margin: 12px 0; padding: 8px;"></div>
-    <input id="chat-msg" placeholder="Type message" onkeypress="if(event.key==='Enter') sendMessage()" />
+
+    <h2>Chat</h2>
+
+    <label>Select Friend to Chat</label>
+    <select id="chat-users" onchange="loadMessages(this.value)"></select>
+
+    <div class="chat-box" id="chat-messages"></div>
+
+    <input id="chat-msg" placeholder="Type a message..." />
     <button onclick="sendMessage()">Send</button>
   </div>
+
   <script type="module" src="js/app.js"></script>
   <script>
     window.onload = () => {
-      window.checkAuthAndRedirect('chat.html');
-      window.loadFriendsForChat();
+      checkAuthAndRedirect("chat.html");
+      loadFriendsForChat();
     };
   </script>
 </body>
